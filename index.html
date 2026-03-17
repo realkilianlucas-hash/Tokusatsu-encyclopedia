@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokusatsu Kaiju Encyclopedia</title>
+    
+    <!-- CDNs for Zero-Install -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'tokusatsu-red': '#8B0000',
+                        'tokusatsu-black': '#0a0a0a',
+                        'tokusatsu-gold': '#FFD700',
+                    },
+                    fontFamily: {
+                        'bebas': ['"Bebas Neue"', 'cursive'],
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer base {
+            body { @apply bg-tokusatsu-black text-white selection:bg-tokusatsu-red selection:text-white font-inter; }
+        }
+        @layer components {
+            .heading-dramatic { @apply font-bebas text-5xl tracking-widest text-tokusatsu-gold uppercase drop-shadow-[0_2px_2px_rgba(139,0,0,0.8)]; }
+            .tokusatsu-border { @apply border-4 border-tokusatsu-red relative; }
+            .glass-panel { @apply bg-white/5 backdrop-blur-md border border-white/10; }
+            .red-glow-hover { @apply transition-all duration-300 hover:shadow-[0_0_20px_rgba(139,0,0,0.6)] hover:border-tokusatsu-red; }
+            .corner-accent { @apply absolute w-4 h-4 border-tokusatsu-gold; }
+            .corner-tl { @apply top-1 left-1 border-t-2 border-l-2; }
+            .corner-tr { @apply top-1 right-1 border-t-2 border-r-2; }
+            .corner-bl { @apply bottom-1 left-1 border-b-2 border-l-2; }
+            .corner-br { @apply bottom-1 right-1 border-b-2 border-r-2; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- Load Local Data First -->
+    <script src="kaiju-data.js"></script>
+
+    <!-- App Logic -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONS (SVG implementations) ---
+        const SearchIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        );
+        const YoutubeIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+        );
+        const BackIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        );
+        const SwordIcon = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></svg>
+        );
+
+        // --- COMPONENTS ---
+
+        function KaijuCard({ item, onClick }) {
+            const [image, setImage] = useState(null);
+
+            useEffect(() => {
+                // Fetch image for card - using a mini-summary to get thumbnail
+                fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${item.wikipediaSlug || item.name}`)
+                    .then(res => res.json())
+                    .then(data => setImage(data.thumbnail?.source))
+                    .catch(() => {});
+            }, [item]);
+
+            return (
+                <div 
+                    onClick={() => onClick(item)}
+                    className="group relative cursor-pointer block bg-white/5 border border-white/10 overflow-hidden red-glow-hover h-full"
+                >
+                    <div className="corner-accent corner-tl"></div><div className="corner-accent corner-tr"></div>
+                    <div className="corner-accent corner-bl"></div><div className="corner-accent corner-br"></div>
+                    <div className="aspect-[3/4] bg-black flex items-center justify-center grayscale group-hover:grayscale-0 transition-all duration-500 overflow-hidden relative">
+                        {image ? (
+                            <img src={image} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                             <div className="flex flex-col items-center justify-center p-4 text-center opacity-30 group-hover:opacity-100 transition-opacity">
+                                <span className="text-4xl mb-2">🐉</span>
+                                <span className="font-bebas text-xl text-tokusatsu-red">{item.name}</span>
+                             </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                    </div>
+                    <div className="p-4 bg-tokusatsu-black/90">
+                        <h3 className="font-bebas text-2xl group-hover:text-tokusatsu-gold transition-colors truncate">{item.name}</h3>
+                        <p className="text-xs text-white/40 uppercase tracking-tighter truncate">{item.franchise}</p>
+                    </div>
+                    <div className="absolute top-2 right-2 px-2 py-0.5 bg-tokusatsu-red/80 text-[10px] font-bold border border-tokusatsu-gold/30">{item.type.toUpperCase()}</div>
+                </div>
+            );
+        }
+
+        function DetailView({ item, onBack }) {
+            const [wikiData, setWikiData] = useState(null);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                setLoading(true);
+                fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${item.wikipediaSlug || item.name}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        setWikiData(data);
+                        setLoading(false);
+                    })
+                    .catch(() => setLoading(false));
+            }, [item]);
+
+            const image = wikiData?.thumbnail?.source || `https://placehold.co/800x1200/0a0a0a/8b0000?text=${item.name}`;
+
+            return (
+                <div className="max-w-5xl mx-auto py-8 px-4">
+                    <button onClick={onBack} className="text-tokusatsu-gold flex items-center gap-2 font-bebas text-xl mb-8 group hover:text-white transition-colors">
+                        <BackIcon /> RETURN TO ARCHIVES
+                    </button>
+                    
+                    <div className="grid md:grid-cols-[1fr,1.5fr] gap-12">
+                        <div className="relative">
+                            <div className="corner-accent corner-tl !w-8 !h-8"></div><div className="corner-accent corner-tr !w-8 !h-8"></div>
+                            <div className="corner-accent corner-bl !w-8 !h-8"></div><div className="corner-accent corner-br !w-8 !h-8"></div>
+                            <div className="tokusatsu-border p-2 bg-tokusatsu-black aspect-[4/5] overflow-hidden shadow-[0_0_50px_rgba(139,0,0,0.3)]">
+                                <img src={image} className="w-full h-full object-cover filter saturate-[0.8] hover:saturate-100 transition-all duration-700" />
+                            </div>
+                            
+                            <div className="mt-6 glass-panel p-4 flex justify-between items-center">
+                                <span className="font-bebas text-xl text-tokusatsu-gold">DEBUT YEAR</span>
+                                <span className="font-bebas text-3xl text-white">{item.firstYear}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-8">
+                            <div className="border-l-8 border-tokusatsu-red pl-6 space-y-2">
+                                <h1 className="font-bebas text-8xl text-white leading-none drop-shadow-lg">{item.name}</h1>
+                                <p className="text-tokusatsu-gold font-bebas text-3xl tracking-[0.2em]">{item.franchise.toUpperCase()}</p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="font-bebas text-3xl text-tokusatsu-red border-b border-white/10 pb-2 flex items-center gap-3">
+                                    <span className="w-8 h-1 bg-tokusatsu-red"></span> ARCHIVE DATA (CONFIDENTIAL)
+                                </h3>
+                                <div className="grid gap-3">
+                                    {item.facts.map((fact, i) => (
+                                        <div key={i} className="glass-panel p-4 border-l-2 border-tokusatsu-gold/30 flex gap-4 hover:bg-white/5 transition-colors">
+                                            <span className="font-bebas text-tokusatsu-gold opacity-50">{String(i+1).padStart(2, '0')}</span>
+                                            <p className="text-white/80 text-sm leading-relaxed">{fact}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <a 
+                                href={`https://en.wikipedia.org/wiki/${item.wikipediaSlug || item.name}`} 
+                                target="_blank" 
+                                className="block bg-tokusatsu-red p-4 font-bebas text-3xl text-center hover:bg-white hover:text-tokusatsu-red transition-all shadow-[0_4px_0_0_#5a0000] active:translate-y-1 active:shadow-none"
+                            >
+                                ACCESS WIKIPEDIA TERMINAL
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function FightRequests({ roster }) {
+            const [selectedA, setSelectedA] = useState(null);
+            const [selectedB, setSelectedB] = useState(null);
+            
+            const heroes = roster.filter(h => h.type === 'hero' || h.name === 'Godzilla' || h.name === 'Gamera');
+            const kaijus = roster.filter(k => k.type === 'kaiju' && k.name !== 'Godzilla' && k.name !== 'Gamera');
+
+            return (
+                <div className="max-w-4xl mx-auto py-12 text-center space-y-12">
+                    <h2 className="heading-dramatic">FIGHT REQUEST SELECTOR</h2>
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+                        <div className="w-full md:w-64 space-y-4">
+                            <h4 className="font-bebas text-2xl text-tokusatsu-gold">HERO SIDE</h4>
+                            <select onChange={(e) => setSelectedA(heroes.find(h => h.id === e.target.value))} className="w-full bg-white/5 border border-tokusatsu-red p-3 outline-none">
+                                <option value="">Select Hero...</option>
+                                {heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                            </select>
+                        </div>
+                        <div className="font-bebas text-6xl text-tokusatsu-red italic">VS</div>
+                        <div className="w-full md:w-64 space-y-4">
+                            <h4 className="font-bebas text-2xl text-tokusatsu-gold">KAIJU SIDE</h4>
+                            <select onChange={(e) => setSelectedB(kaijus.find(k => k.id === e.target.value))} className="w-full bg-white/5 border border-tokusatsu-red p-3 outline-none">
+                                <option value="">Select Kaiju...</option>
+                                {kaijus.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    {selectedA && selectedB && (
+                        <div className="glass-panel p-8 space-y-6">
+                            <div className="font-bebas text-5xl text-tokusatsu-gold">{selectedA.name} VS {selectedB.name}</div>
+                            <button onClick={() => window.open('https://www.youtube.com/@TokusatsuFilms')} className="bg-tokusatsu-red px-8 py-3 font-bebas text-2xl flex items-center gap-2 mx-auto hover:bg-white hover:text-tokusatsu-red transition-all">
+                                <YoutubeIcon /> REQUEST ON YOUTUBE
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // --- MAIN APP ---
+
+        function App() {
+            const [view, setView] = useState('home'); // home, detail, fights
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [search, setSearch] = useState('');
+            const data = window.RosterData || [];
+
+            const filtered = data.filter(i => i.name.toLowerCase().includes(search.toLowerCase()));
+
+            return (
+                <div className="min-h-screen">
+                    <nav className="h-20 border-b border-tokusatsu-red flex items-center justify-between px-8 bg-tokusatsu-black/80 backdrop-blur-md sticky top-0 z-50">
+                        <h1 className="font-bebas text-4xl text-tokusatsu-gold cursor-pointer" onClick={() => setView('home')}>怪獣 DATABASE</h1>
+                        <div className="flex gap-8 font-bebas text-2xl">
+                            <button onClick={() => setView('home')} className={view === 'home' ? 'text-tokusatsu-red' : 'hover:text-tokusatsu-gold'}>ENCYLOPEDIA</button>
+                            <button onClick={() => setView('fights')} className={view === 'fights' ? 'text-tokusatsu-red' : 'hover:text-tokusatsu-gold'}>FIGHT REQUESTS</button>
+                        </div>
+                    </nav>
+
+                    <main className="p-8 max-w-7xl mx-auto">
+                        {view === 'home' && (
+                            <div className="space-y-8">
+                                <div className="text-center space-y-4">
+                                    <h2 className="heading-dramatic">CENTRAL ARCHIVES</h2>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search by name..." 
+                                        className="w-full max-w-md bg-white/5 border-2 border-tokusatsu-red p-4 outline-none focus:border-tokusatsu-gold transition-all"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                    {filtered.map(item => <KaijuCard key={item.id} item={item} onClick={(i) => {setSelectedItem(i); setView('detail');}} />)}
+                                </div>
+                            </div>
+                        )}
+
+                        {view === 'detail' && <DetailView item={selectedItem} onBack={() => setView('home')} />}
+                        {view === 'fights' && <FightRequests roster={data} />}
+                    </main>
+
+                    <footer className="p-12 border-t border-white/10 text-center opacity-30 font-bebas text-xl">
+                        &copy; 2026 TOKUSATSU ARCHIVE PROJECT
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
